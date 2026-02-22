@@ -1,145 +1,217 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Clock, ChefHat, Users, Heart, Share2, CheckCircle2, Circle } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
-
-const DUMMY_RECIPE = {
-    title: 'Phở Bò Gia Truyền Nam Định',
-    image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&q=80&w=1200',
-    description: 'Món phở truyền thống đậm đà bản sắc Việt Nam với nước xương hầm ngọt thanh và bánh phở dai mềm.',
-    time: '3 giờ',
-    difficulty: 'Khó',
-    servings: 4,
-    author: 'Bếp Trưởng Nam',
-    ingredients: [
-        { id: 1, name: 'Xương ống bò', amount: '1 kg' },
-        { id: 2, name: 'Thịt bò (nạm, gầu)', amount: '500g' },
-        { id: 3, name: 'Bánh phở tươi', amount: '1 kg' },
-        { id: 4, name: 'Gừng, hành tím nướng', amount: '100g' },
-        { id: 5, name: 'Thảo quả, hoa hồi, quế', amount: '20g' },
-    ],
-    steps: [
-        { id: 1, content: 'Sơ chế xương bò: Rửa sạch xương, chần qua nước sôi 5 phút để khử mùi hôi. Rửa lại bằng nước lạnh.' },
-        { id: 2, content: 'Hầm xương: Cho xương vào nồi áp suất cùng 3 lít nước. Hầm trong 2 tiếng cùng gừng và hành tím nướng.' },
-        { id: 3, content: 'Rang gia vị: Rang sơ thảo quả, hoa hồi, quế cho thơm rồi cho bọc mùng vào nồi nước dùng hầm thêm 1 tiếng.' },
-        { id: 4, content: 'Thái thịt và chuẩn bị bánh phở: Thịt bò luộc chín thái mỏng. Bánh phở chần qua nước sôi.' },
-        { id: 5, content: 'Trình bày: Cho bánh phở ra bát, xếp thịt lên trên, chan nước dùng nóng hổi. Ăn kèm quẩy và hành lá.' },
-    ]
-};
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Clock, Users, Star, ChefHat, Bookmark, Share2, PlayCircle, Plus } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useRecipes } from '../hooks/useRecipes';
 
 const RecipeDetail = () => {
     const { id } = useParams();
-    const [checkedIngredients, setCheckedIngredients] = useState(new Set());
+    const navigate = useNavigate();
+    const { getRecipeById } = useRecipes();
 
-    const toggleIngredient = (ingId) => {
-        const newSet = new Set(checkedIngredients);
-        if (newSet.has(ingId)) newSet.delete(ingId);
-        else newSet.add(ingId);
-        setCheckedIngredients(newSet);
-    };
+    const [recipe, setRecipe] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('ingredients');
+
+    useEffect(() => {
+        const fetchRecipe = async () => {
+            const { data } = await getRecipeById(id);
+            if (data) {
+                setRecipe(data);
+            }
+            setLoading(false);
+        };
+        fetchRecipe();
+    }, [id, getRecipeById]);
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!recipe) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
+                <ChefHat className="w-16 h-16 text-gray-300 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy công thức</h2>
+                <button onClick={() => navigate(-1)} className="text-primary font-medium hover:underline">Quay lại</button>
+            </div>
+        );
+    }
+
+    const {
+        title, cover_image, description, prep_time, cook_time,
+        difficulty, base_servings, avg_rating, profiles,
+        recipe_ingredients, recipe_steps
+    } = recipe;
 
     return (
-        <div className="flex-1 bg-[#FAFAFA] pb-24 md:pb-8">
-            {/* Mobile Header Overlay */}
-            <div className="md:hidden absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
-                <Link to="/" className="w-10 h-10 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white">
-                    <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div className="flex gap-2">
-                    <button className="w-10 h-10 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white">
-                        <Heart className="w-5 h-5" />
+        <div className="flex-1 bg-white pb-24">
+            {/* Header / Hero Image */}
+            <div className="relative h-72 md:h-96 w-full">
+                <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 shadow-sm transition-transform active:scale-95"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <button className="w-10 h-10 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white">
-                        <Share2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex gap-2">
+                        <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 shadow-sm transition-transform active:scale-95">
+                            <Share2 className="w-5 h-5" />
+                        </button>
+                        <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 shadow-sm transition-transform active:scale-95">
+                            <Bookmark className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Hero Image */}
-            <div className="relative w-full aspect-square md:aspect-[21/9] max-h-[500px]">
                 <img
-                    src={DUMMY_RECIPE.image}
-                    alt={DUMMY_RECIPE.title}
-                    className="w-full h-full object-cover md:rounded-t-2xl"
+                    src={cover_image}
+                    alt={title}
+                    className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent md:rounded-t-2xl"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h1 className="text-3xl font-bold mb-2 leading-tight">{DUMMY_RECIPE.title}</h1>
-                    <p className="text-gray-200 line-clamp-2">{DUMMY_RECIPE.description}</p>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             </div>
 
-            <div className="px-4 md:px-8 max-w-4xl mx-auto -mt-4 relative z-10">
-                {/* Info Stats */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex justify-between items-center mb-6">
-                    <div className="flex flex-col items-center">
+            {/* Main Content Info */}
+            <div className="px-4 pt-6 -mt-10 relative bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-2">
+                    {title}
+                </h1>
+
+                {profiles && (
+                    <div className="flex items-center gap-2 mb-4">
+                        <img src={profiles.avatar_url || 'https://ui-avatars.com/api/?name=' + profiles.full_name} alt={profiles.full_name} className="w-6 h-6 rounded-full" />
+                        <span className="text-sm font-medium text-gray-600">bởi {profiles.full_name}</span>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-4 text-sm font-medium mb-6">
+                    {avg_rating > 0 && (
+                        <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded-md">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span>{avg_rating}</span>
+                        </div>
+                    )}
+                </div>
+
+                <p className="text-gray-600 leading-relaxed mb-6">
+                    {description}
+                </p>
+
+                {/* Stats Grid */}
+                <div className="flex justify-between items-center bg-gray-50 rounded-2xl p-4 mb-8">
+                    <div className="flex flex-col items-center gap-1 w-1/3">
                         <Clock className="w-6 h-6 text-primary mb-1" />
-                        <span className="text-sm font-medium text-gray-600">{DUMMY_RECIPE.time}</span>
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Thời gian</span>
+                        <span className="font-bold text-gray-900">{(prep_time || 0) + (cook_time || 0)}p</span>
                     </div>
-                    <div className="w-px h-10 bg-gray-100"></div>
-                    <div className="flex flex-col items-center">
+                    <div className="w-px h-10 bg-gray-200"></div>
+                    <div className="flex flex-col items-center gap-1 w-1/3">
                         <ChefHat className="w-6 h-6 text-primary mb-1" />
-                        <span className="text-sm font-medium text-gray-600">{DUMMY_RECIPE.difficulty}</span>
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Độ khó</span>
+                        <span className="font-bold text-gray-900 capitalize">
+                            {difficulty === 'easy' ? 'Dễ' : difficulty === 'medium' ? 'Trung bình' : 'Khó'}
+                        </span>
                     </div>
-                    <div className="w-px h-10 bg-gray-100"></div>
-                    <div className="flex flex-col items-center">
+                    <div className="w-px h-10 bg-gray-200"></div>
+                    <div className="flex flex-col items-center gap-1 w-1/3">
                         <Users className="w-6 h-6 text-primary mb-1" />
-                        <span className="text-sm font-medium text-gray-600">{DUMMY_RECIPE.servings} người</span>
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Khẩu phần</span>
+                        <span className="font-bold text-gray-900">{base_servings} người</span>
                     </div>
                 </div>
 
-                {/* Ingredients Section */}
-                <section className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Nguyên liệu</h2>
-                    <div className="bg-white rounded-2xl shadow-sm p-2">
-                        {DUMMY_RECIPE.ingredients.map((ing, idx) => {
-                            const checked = checkedIngredients.has(ing.id);
-                            return (
-                                <div
-                                    key={ing.id}
-                                    onClick={() => toggleIngredient(ing.id)}
-                                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${checked ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        {checked ? (
-                                            <CheckCircle2 className="w-5 h-5 text-primary" />
-                                        ) : (
-                                            <Circle className="w-5 h-5 text-gray-300" />
-                                        )}
-                                        <span className={`text-gray-800 ${checked ? 'line-through text-gray-500' : ''}`}>
-                                            {ing.name}
-                                        </span>
-                                    </div>
-                                    <span className="text-gray-500 text-sm font-medium">{ing.amount}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
+                {/* Tabs */}
+                <div className="flex border-b border-gray-100 mb-6 relative">
+                    <button
+                        className={`flex-1 pb-4 text-center font-bold text-[15px] transition-colors ${activeTab === 'ingredients' ? 'text-primary' : 'text-gray-400'}`}
+                        onClick={() => setActiveTab('ingredients')}
+                    >
+                        Nguyên liệu ({recipe_ingredients?.length || 0})
+                    </button>
+                    <button
+                        className={`flex-1 pb-4 text-center font-bold text-[15px] transition-colors ${activeTab === 'steps' ? 'text-primary' : 'text-gray-400'}`}
+                        onClick={() => setActiveTab('steps')}
+                    >
+                        Cách làm ({recipe_steps?.length || 0})
+                    </button>
+                    {/* Active Indicator */}
+                    <div
+                        className="absolute bottom-0 h-0.5 bg-primary rounded-full transition-all duration-300 ease-out"
+                        style={{
+                            width: '50%',
+                            left: activeTab === 'ingredients' ? '0%' : '50%'
+                        }}
+                    ></div>
+                </div>
 
-                {/* Steps Section */}
-                <section className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Cách làm</h2>
-                    <div className="space-y-4">
-                        {DUMMY_RECIPE.steps.map((step, idx) => (
-                            <div key={step.id} className="bg-white rounded-2xl shadow-sm p-5 flex gap-4">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                    {idx + 1}
+                {/* Tab Content: Ingredients */}
+                {activeTab === 'ingredients' && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center justify-between bg-primary/5 rounded-xl p-3 mb-2">
+                            <span className="font-semibold text-gray-800">Thêm tất cả vào danh sách chợ</span>
+                            <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm">
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {(recipe_ingredients || []).map((item, idx) => (
+                            <div key={item.id || idx} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded-lg -mx-2 px-2 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-primary/40"></div>
+                                    <span className="font-medium text-gray-800 text-base">{item.ingredient_master?.name}</span>
+                                    {item.prep_note && (
+                                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{item.prep_note}</span>
+                                    )}
                                 </div>
-                                <p className="text-gray-700 leading-relaxed pt-1">
-                                    {step.content}
-                                </p>
+                                <div className="font-bold text-gray-900">
+                                    {item.quantity} {item.unit}
+                                </div>
                             </div>
                         ))}
                     </div>
-                </section>
+                )}
 
+                {/* Tab Content: Steps */}
+                {activeTab === 'steps' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {(recipe_steps || []).map((step, idx) => (
+                            <div key={step.id || idx} className="flex gap-4">
+                                <div className="flex flex-col items-center">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary border border-primary/20 shrink-0">
+                                        {step.step_order}
+                                    </div>
+                                    {idx !== (recipe_steps || []).length - 1 && (
+                                        <div className="w-px h-full bg-gray-200 my-2"></div>
+                                    )}
+                                </div>
+                                <div className="pb-6 w-full">
+                                    <p className="text-gray-800 leading-relaxed font-medium">
+                                        {step.content}
+                                    </p>
+
+                                    {step.timer_seconds && (
+                                        <div className="mt-3 inline-flex items-center gap-2 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg text-sm font-bold w-fit cursor-pointer hover:bg-orange-100 transition-colors">
+                                            <PlayCircle className="w-4 h-4" />
+                                            <span>Hẹn giờ: {Math.floor(step.timer_seconds / 60)} phút</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* Floating Action CTA - Mobile */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 md:hidden z-20">
-                <button className="w-full bg-primary text-white font-bold py-4 rounded-full shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                    <ChefHat className="w-5 h-5" /> Bắt đầu nấu ngay
+            {/* Bottom Action Bar (Mobile Sticky) */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 md:hidden z-40">
+                <button className="w-full bg-primary text-white font-bold text-lg py-4 rounded-full shadow-lg hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <PlayCircle className="w-6 h-6" />
+                    Bắt đầu nấu
                 </button>
             </div>
         </div>

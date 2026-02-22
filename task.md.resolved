@@ -1,0 +1,23 @@
+# RecipeBuddy Roadmap & Tasks
+
+## Giai đoạn 1: Setup & Static UI
+- [x] Initialize React Vite project with Tailwind CSS v4.
+- [x] Configure Supabase client (api/supabase.ts).
+- [x] Establish directory structure (components, hooks, pages, etc.).
+- [x] Setup Global Styles & Tailwind Config (Colors, Fonts, Rules).
+- [x] Implement Mobile-first layout components (Header, Footer, Container, and main layout components for web on desktop).
+- [x] Implement Home Screen Static UI (from Stitch MCP).
+- [x] Implement Recipe Detail Static UI (from Stitch MCP).
+
+## Giai đoạn 2: Data Integration & Smart Features
+- [ ] Define database schema and RLS policies in Supabase.
+- [ ] Implement Authentication flows (Login, Register).
+- [ ] Connect Home Feed to real database queries.
+- [ ] Implement Search & Filter logic.
+- [ ] Connect Recipe Detail to real data and images.
+
+## Giai đoạn 3: Cooking Mode & Optimizations
+- [ ] Implement Cooking Mode (Step-by-step UI).
+- [ ] Image Optimization for Recipe uploads.
+- [ ] Polish UI/UX (Micro-animations, transitions).
+- [ ] Final performance optimizations & QA.
