@@ -1,27 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Clock, Users, Star, ChefHat, Bookmark, Share2, PlayCircle, Plus } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Star, ChefHat, Bookmark, Share2, PlayCircle, Plus, MessageCircle, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRecipes } from '../hooks/useRecipes';
+import { useUserActions } from '../hooks/useUserActions';
+import { useAuth } from '../hooks/useAuth';
 
 const RecipeDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const { getRecipeById } = useRecipes();
+    const {
+        toggleBookmark, isBookmarked,
+        fetchReviews, addReview,
+        addToShoppingList
+    } = useUserActions();
 
     const [recipe, setRecipe] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ingredients');
+    const [bookmarked, setBookmarked] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [newReview, setNewReview] = useState('');
+    const [rating, setRating] = useState(5);
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
-        const fetchRecipe = async () => {
-            const { data } = await getRecipeById(id);
-            if (data) {
-                setRecipe(data);
-            }
+        const loadData = async () => {
+            const [recipeRes, bookmarkStatus, reviewsData] = await Promise.all([
+                getRecipeById(id),
+                isBookmarked(id),
+                fetchReviews(id)
+            ]);
+
+            if (recipeRes.data) setRecipe(recipeRes.data);
+            setBookmarked(bookmarkStatus);
+            setReviews(reviewsData);
             setLoading(false);
         };
-        fetchRecipe();
-    }, [id, getRecipeById]);
+        loadData();
+    }, [id, getRecipeById, isBookmarked, fetchReviews]);
+
+    const handleToggleBookmark = async () => {
+        if (!user) return navigate('/login');
+        const res = await toggleBookmark(id);
+        if (!res.error) setBookmarked(res.action === 'added');
+    };
+
+    const handleAddReview = async (e) => {
+        e.preventDefault();
+        if (!user) return navigate('/login');
+        if (!newReview.trim()) return;
+
+        setSubmittingReview(true);
+        const res = await addReview(id, rating, newReview);
+        if (!res.error) {
+            setNewReview('');
+            const updatedReviews = await fetchReviews(id);
+            setReviews(updatedReviews);
+        }
+        setSubmittingReview(false);
+    };
+
+    const handleAddToMall = async (item) => {
+        if (!user) return navigate('/login');
+        await addToShoppingList(item.ingredient_id, item.quantity, item.unit);
+        alert(`Đã thêm ${item.ingredient_master?.name} vào danh sách đi chợ!`);
+    };
 
     if (loading) {
         return (
@@ -62,8 +107,11 @@ const RecipeDetail = () => {
                         <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 shadow-sm transition-transform active:scale-95">
                             <Share2 className="w-5 h-5" />
                         </button>
-                        <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 shadow-sm transition-transform active:scale-95">
-                            <Bookmark className="w-5 h-5" />
+                        <button
+                            onClick={handleToggleBookmark}
+                            className={`w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm transition-all active:scale-95 ${bookmarked ? 'text-primary' : 'text-gray-800'}`}
+                        >
+                            <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-current' : ''}`} />
                         </button>
                     </div>
                 </div>
@@ -90,12 +138,14 @@ const RecipeDetail = () => {
                 )}
 
                 <div className="flex items-center gap-4 text-sm font-medium mb-6">
-                    {avg_rating > 0 && (
-                        <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded-md">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span>{avg_rating}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded-md">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span>{avg_rating || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>{reviews.length} đánh giá</span>
+                    </div>
                 </div>
 
                 <p className="text-gray-600 leading-relaxed mb-6">
@@ -139,12 +189,18 @@ const RecipeDetail = () => {
                     >
                         Cách làm ({recipe_steps?.length || 0})
                     </button>
+                    <button
+                        className={`flex-1 pb-4 text-center font-bold text-[15px] transition-colors ${activeTab === 'reviews' ? 'text-primary' : 'text-gray-400'}`}
+                        onClick={() => setActiveTab('reviews')}
+                    >
+                        Nhận xét ({reviews.length})
+                    </button>
                     {/* Active Indicator */}
                     <div
                         className="absolute bottom-0 h-0.5 bg-primary rounded-full transition-all duration-300 ease-out"
                         style={{
-                            width: '50%',
-                            left: activeTab === 'ingredients' ? '0%' : '50%'
+                            width: '33.33%',
+                            left: activeTab === 'ingredients' ? '0%' : activeTab === 'steps' ? '33.33%' : '66.66%'
                         }}
                     ></div>
                 </div>
@@ -153,10 +209,8 @@ const RecipeDetail = () => {
                 {activeTab === 'ingredients' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="flex items-center justify-between bg-primary/5 rounded-xl p-3 mb-2">
-                            <span className="font-semibold text-gray-800">Thêm tất cả vào danh sách chợ</span>
-                            <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm">
-                                <Plus className="w-5 h-5" />
-                            </button>
+                            <span className="font-semibold text-gray-800">Cần mua nguyên liệu?</span>
+                            <span className="text-xs text-primary font-medium">Lưu vào danh sách đi chợ</span>
                         </div>
 
                         {(recipe_ingredients || []).map((item, idx) => (
@@ -165,11 +219,19 @@ const RecipeDetail = () => {
                                     <div className="w-2 h-2 rounded-full bg-primary/40"></div>
                                     <span className="font-medium text-gray-800 text-base">{item.ingredient_master?.name}</span>
                                     {item.prep_note && (
-                                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{item.prep_note}</span>
+                                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full line-clamp-1 max-w-[150px]">{item.prep_note}</span>
                                     )}
                                 </div>
-                                <div className="font-bold text-gray-900">
-                                    {item.quantity} {item.unit}
+                                <div className="flex items-center gap-3">
+                                    <div className="font-bold text-gray-900 text-right">
+                                        {item.quantity} {item.unit}
+                                    </div>
+                                    <button
+                                        onClick={() => handleAddToMall(item)}
+                                        className="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -203,6 +265,69 @@ const RecipeDetail = () => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Tab Content: Reviews */}
+                {activeTab === 'reviews' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* Add Review Form */}
+                        {user ? (
+                            <div className="bg-gray-50 rounded-2xl p-4">
+                                <h3 className="font-bold text-gray-900 mb-3">Để lại nhận xét</h3>
+                                <div className="flex gap-1 mb-3">
+                                    {[1, 2, 3, 4, 5].map(s => (
+                                        <button key={s} onClick={() => setRating(s)}>
+                                            <Star className={`w-6 h-6 ${rating >= s ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                                        </button>
+                                    ))}
+                                </div>
+                                <form onSubmit={handleAddReview} className="relative">
+                                    <textarea
+                                        value={newReview}
+                                        onChange={(e) => setNewReview(e.target.value)}
+                                        placeholder="Bạn thấy món ăn này thế nào?"
+                                        className="w-full bg-white rounded-xl p-3 text-sm border border-gray-100 focus:outline-none focus:ring-1 focus:ring-primary min-h-[100px] pb-12"
+                                    />
+                                    <button
+                                        disabled={submittingReview}
+                                        className="absolute bottom-3 right-3 bg-primary text-white p-2 rounded-full shadow-md disabled:bg-gray-300"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </button>
+                                </form>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 rounded-2xl p-6 text-center">
+                                <p className="text-gray-500 mb-3">Đăng nhập để chia sẻ cảm nghĩ của bạn</p>
+                                <button onClick={() => navigate('/login')} className="px-6 py-2 bg-primary text-white rounded-full font-bold">Đăng nhập</button>
+                            </div>
+                        )}
+
+                        {/* List Reviews */}
+                        <div className="space-y-4">
+                            {reviews.length > 0 ? reviews.map(review => (
+                                <div key={review.id} className="border-b border-gray-50 pb-4 last:border-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <img src={review.profiles?.avatar_url || 'https://ui-avatars.com/api/?name=' + review.profiles?.full_name} className="w-8 h-8 rounded-full" alt="" />
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900">{review.profiles?.full_name}</p>
+                                                <div className="flex gap-0.5">
+                                                    {[1, 2, 3, 4, 5].map(s => (
+                                                        <Star key={s} className={`w-3 h-3 ${review.rating >= s ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400 uppercase">{new Date(review.created_at).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed pl-10">{review.content}</p>
+                                </div>
+                            )) : (
+                                <p className="text-center text-gray-400 py-8">Chưa có đánh giá nào cho món này.</p>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

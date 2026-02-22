@@ -6,6 +6,7 @@ import RecipeDetail from './pages/RecipeDetail';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
+import ShoppingList from './pages/ShoppingList';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/search" element={<Search />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/shopping-list" element={<ShoppingList />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />
           </Routes>
         </Layout>
