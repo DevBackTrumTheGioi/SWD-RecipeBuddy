@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useRecipes } from '../hooks/useRecipes';
 import { useUserActions } from '../hooks/useUserActions';
 import { useAuth } from '../hooks/useAuth';
+import { useShoppingCart } from '../contexts/ShoppingCartContext';
 
 const RecipeDetail = () => {
     const { id } = useParams();
@@ -13,8 +14,8 @@ const RecipeDetail = () => {
     const {
         toggleBookmark, isBookmarked,
         fetchReviews, addReview,
-        addToShoppingList
     } = useUserActions();
+    const { addItem, triggerFlyAnimation } = useShoppingCart();
 
     const [recipe, setRecipe] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -62,10 +63,15 @@ const RecipeDetail = () => {
         setSubmittingReview(false);
     };
 
-    const handleAddToMall = async (item) => {
+    const handleAddToMall = async (item, e) => {
         if (!user) return navigate('/login');
-        await addToShoppingList(item.ingredient_id, item.quantity, item.unit);
-        alert(`Đã thêm ${item.ingredient_master?.name} vào danh sách đi chợ!`);
+
+        // Capture button position for fly animation
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        triggerFlyAnimation(rect, item.ingredient_master?.name);
+
+        await addItem(item.ingredient_id, item.quantity, item.unit, item.ingredient_master?.name);
     };
 
     if (loading) {
@@ -227,7 +233,7 @@ const RecipeDetail = () => {
                                         {item.quantity} {item.unit}
                                     </div>
                                     <button
-                                        onClick={() => handleAddToMall(item)}
+                                        onClick={(e) => handleAddToMall(item, e)}
                                         className="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary transition-colors"
                                     >
                                         <Plus className="w-4 h-4" />
@@ -334,7 +340,10 @@ const RecipeDetail = () => {
 
             {/* Bottom Action Bar (Mobile Sticky) */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 md:hidden z-40">
-                <button className="w-full bg-primary text-white font-bold text-lg py-4 rounded-full shadow-lg hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <button
+                    onClick={() => navigate(`/recipe/${id}/cook`)}
+                    className="w-full bg-primary text-white font-bold text-lg py-4 rounded-full shadow-lg hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
                     <PlayCircle className="w-6 h-6" />
                     Bắt đầu nấu
                 </button>
