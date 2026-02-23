@@ -123,7 +123,7 @@ export const useRecipes = () => {
                 .select(`
           *,
           profiles:author_id ( full_name, avatar_url ),
-          recipe_ingredients ( id, quantity, unit, prep_note, ingredient_master (name) ),
+          recipe_ingredients ( id, ingredient_id, quantity, unit, prep_note, ingredient_master (name) ),
           recipe_steps ( id, step_order, content, timer_seconds )
         `)
                 .eq('id', id)
