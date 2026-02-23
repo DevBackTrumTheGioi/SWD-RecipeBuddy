@@ -2,7 +2,7 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import BottomNav from './BottomNav';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 
 const Layout = ({ children }) => {
     const location = useLocation();
@@ -21,6 +21,7 @@ const Layout = ({ children }) => {
 
             <main className="flex-1 w-full max-w-7xl mx-auto md:px-4 md:py-6 relative layout-content flex flex-col">
                 <div className="flex-1 w-full h-full bg-white md:rounded-2xl md:shadow-sm overflow-hidden flex flex-col min-h-0">
+                    <Outlet />
                     {children}
                 </div>
             </main>
@@ -38,3 +39,4 @@ const Layout = ({ children }) => {
 };
 
 export default Layout;
+

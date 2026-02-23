@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUserActions } from '../hooks/useUserActions';
-import { LogOut, Bookmark, Settings, ChefHat, ChevronRight, ShoppingCart, Star } from 'lucide-react';
+import { LogOut, Bookmark, Settings, ChefHat, ChevronRight, ShoppingCart, Star, PlusCircle } from 'lucide-react';
 
 const Dashboard = () => {
     const { user, loading: authLoading, signOut } = useAuth();
@@ -53,7 +53,7 @@ const Dashboard = () => {
             </div>
 
             {/* Stats / Quick Actions Row */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-3 mb-6">
                 <button
                     onClick={() => navigate('/shopping-list')}
                     className="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center gap-2 border border-gray-50 active:scale-95 transition-transform"
@@ -61,14 +61,23 @@ const Dashboard = () => {
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                         <ShoppingCart className="w-5 h-5" />
                     </div>
-                    <span className="text-sm font-bold text-gray-800">Đi chợ</span>
+                    <span className="text-xs font-bold text-gray-800">Đi chợ</span>
                 </button>
                 <div className="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center gap-2 border border-gray-50">
                     <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
                         <Star className="w-5 h-5" />
                     </div>
-                    <span className="text-sm font-bold text-gray-800">{savedRecipes.length} Đã lưu</span>
+                    <span className="text-xs font-bold text-gray-800">{savedRecipes.length} Đã lưu</span>
                 </div>
+                <button
+                    onClick={() => navigate('/contribute')}
+                    className="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center gap-2 border border-gray-50 active:scale-95 transition-transform"
+                >
+                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                        <PlusCircle className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-gray-800">Đóng góp</span>
+                </button>
             </div>
 
             {/* Saved Recipes Section */}
@@ -107,12 +116,15 @@ const Dashboard = () => {
 
             {/* Actions Menu */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-                <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100">
+                <button
+                    onClick={() => navigate('/contribute')}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                             <ChefHat className="w-5 h-5" />
                         </div>
-                        <span className="font-medium text-gray-700">Công thức của tôi</span>
+                        <span className="font-medium text-gray-700">Đóng góp công thức</span>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                 </button>
