@@ -22,7 +22,7 @@ export const useRecipes = () => {
         }
     }, []);
 
-    const fetchRecipes = useCallback(async ({ categoryId, searchQuery, limit = 10 } = {}) => {
+    const fetchRecipes = useCallback(async ({ categoryId, searchQuery, maxTime = 120, difficulty, ingredients = [], limit = 10 } = {}) => {
         setLoading(true);
         setError(null);
         try {
@@ -40,13 +40,27 @@ export const useRecipes = () => {
                 query = query.ilike('title', `%${searchQuery}%`);
             }
 
+            // Filter by difficulty at the database level if present
+            // Handle case mismatch by converting to lowercase assuming DB uses 'easy', 'medium', 'hard'
+            if (difficulty) {
+                let diffParam = '';
+                if (difficulty === 'Dễ') diffParam = 'easy';
+                else if (difficulty === 'Trung bình') diffParam = 'medium';
+                else if (difficulty === 'Khó') diffParam = 'hard';
+                else diffParam = difficulty;
+
+                if (diffParam) {
+                    query = query.eq('difficulty', diffParam);
+                }
+            }
+
             const { data, error: recipesError } = await query;
             if (recipesError) throw recipesError;
 
             // Filter by category if provided (requires join logic, handled simpler for now or via RPC)
             // Since it's a many-to-many, simpler to filter locally if data size is small, 
             // or use a view/rpc for complex queries in production.
-            let finalData = data;
+            let finalData = data || [];
 
             if (categoryId) {
                 const { data: tagData, error: tagError } = await supabase
@@ -57,6 +71,39 @@ export const useRecipes = () => {
                 if (!tagError && tagData) {
                     const recipeIds = tagData.map(t => t.recipe_id);
                     finalData = finalData.filter(r => recipeIds.includes(r.id));
+                }
+            }
+
+            // Client-side filtering for complex relations (Category, Ingredients, Time)
+            // Time filter
+            if (maxTime && maxTime < 120) {
+                finalData = finalData.filter(r => ((r.prep_time || 0) + (r.cook_time || 0)) <= maxTime);
+            }
+
+            // Ingredients filter
+            if (ingredients && ingredients.length > 0) {
+                // Fetch recipe IDs that have all/any of these ingredients
+                // Since `recipe_ingredients` is a relation, and we might not have it loaded, we query it.
+                // We'll search by ingredient master name.
+                const { data: ingData, error: ingError } = await supabase
+                    .from('recipe_ingredients')
+                    .select('recipe_id, ingredient_master!inner(name)');
+
+                if (!ingError && ingData) {
+                    // Match any ingredient the user typed
+                    const matchedRecipeIds = new Set();
+                    const filterIngsLower = ingredients.map(ing => ing.toLowerCase());
+
+                    ingData.forEach(item => {
+                        if (item.ingredient_master && item.ingredient_master.name) {
+                            const dbNameLower = item.ingredient_master.name.toLowerCase();
+                            // If any selected ingredient string is included in the DB ingredient name
+                            if (filterIngsLower.some(fi => dbNameLower.includes(fi) || fi.includes(dbNameLower))) {
+                                matchedRecipeIds.add(item.recipe_id);
+                            }
+                        }
+                    });
+                    finalData = finalData.filter(r => matchedRecipeIds.has(r.id));
                 }
             }
 

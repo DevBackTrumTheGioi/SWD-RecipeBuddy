@@ -1,6 +1,6 @@
 # RecipeBuddy Roadmap & Tasks
 
-## Giai đoạn 1: Setup & Static UI
+## Giai đoạn 1: Setup & Static UI (Đã hoàn thành)
 - [x] Initialize React Vite project with Tailwind CSS v4.
 - [x] Configure Supabase client (api/supabase.ts).
 - [x] Establish directory structure (components, hooks, pages, etc.).
@@ -9,15 +9,32 @@
 - [x] Implement Home Screen Static UI (from Stitch MCP).
 - [x] Implement Recipe Detail Static UI (from Stitch MCP).
 
-## Giai đoạn 2: Data Integration & Smart Features
-- [ ] Define database schema and RLS policies in Supabase.
-- [ ] Implement Authentication flows (Login, Register).
-- [ ] Connect Home Feed to real database queries.
-- [ ] Implement Search & Filter logic.
-- [ ] Connect Recipe Detail to real data and images.
+## Giai đoạn 2: Cơ cở dữ liệu, Xác thực & Luồng Khám phá (Discovery Flow)
+- [x] Thiết lập Database schema trên Supabase (Tables: users, recipes, categories).
+- [x] Khởi tạo dữ liệu mẫu (Mock data) cho Supabase để test giao diện.
+- [x] Cấu hình Row Level Security (RLS) policies bảo mật dữ liệu.
+- [x] Tích hợp tính năng Đăng ký / Đăng nhập (Email & Google) qua Supabase Auth.
+- [x] Đổ dữ liệu thật (Real data) cho danh sách danh mục và gợi ý món ăn trên trang [Home](file:///d:/SWDxxx/RecipeBuddy/src/pages/Home.jsx#6-137).
+- [x] Xây dựng trang [Search](file:///d:/SWDxxx/RecipeBuddy/src/pages/Search.jsx#6-139) và chức năng tìm kiếm/lọc thông minh theo tên, nguyên liệu, category.
+- [x] Cập nhật trang [RecipeDetail](file:///d:/SWDxxx/RecipeBuddy/src/pages/RecipeDetail.jsx#8-345) lấy dữ liệu thực tế từ database.
+- [x] Viết Script Cào dữ liệu (Crawling) lấy các công thức món ăn Việt Nam từ Điện Máy Xanh và Seed tự động vào Supabase.
 
-## Giai đoạn 3: Cooking Mode & Optimizations
-- [ ] Implement Cooking Mode (Step-by-step UI).
-- [ ] Image Optimization for Recipe uploads.
-- [ ] Polish UI/UX (Micro-animations, transitions).
-- [ ] Final performance optimizations & QA.
+## Giai đoạn 3: Tính năng Thành viên (Member Interaction) (Đã hoàn thành)
+- [x] Thiết lập Database tables: bookmarks, reviews, shopping_list.
+- [x] Triển khai tính năng Lưu món yêu thích (Sổ tay cá nhân / Bookmark).
+- [x] Triển khai tính năng Đánh giá (Rate) & Bình luận (Review) trong trang chi tiết.
+- [x] Xây dựng trang [Dashboard](file:///d:/SWDxxx/RecipeBuddy/src/pages/Dashboard.jsx#7-137) (Profile) cho người dùng quản lý thông tin.
+- [x] Xây dựng tính năng Danh sách đi chợ (Shopping List - Thêm/xóa/tick đã mua).
+
+## Giai đoạn 4: Trải nghiệm Nấu ăn & Đóng góp nội dung
+- [ ] Xây dựng Chế độ Nấu ăn (Cooking Mode): Giao diện vuốt slide, màn hình luôn sáng.
+- [ ] Tích hợp đồng hồ đếm ngược (Timer) cho các bước nấu ăn.
+- [ ] Triển khai form Đóng góp công thức (Cho phép upload ảnh lên Supabase Storage).
+- [ ] Xử lý nén ảnh (Image Optimization) trước khi upload.
+
+## Giai đoạn 5: Trang Quản trị (Admin) & Tối ưu hóa (Polish)
+- [ ] Xây dựng Web Layout riêng cho Admin Dashboard.
+- [ ] Chức năng Kiểm duyệt công thức (Approve/Reject).
+- [ ] Quản lý Danh mục và Người dùng.
+- [ ] Tối ưu hóa UI/UX: Micro-interactions (haptic feedback, animations).
+- [ ] Hỗ trợ Offline Readiness (lưu cache công thức) cho Cooking Mode.

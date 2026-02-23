@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ChefHat } from 'lucide-react';
 
 const Login = () => {
-    const { signInWithGoogle, user } = useAuth();
+    const { signInWithGoogle, user, loading } = useAuth();
     const navigate = useNavigate();
 
     // If already logged in, redirect to home
-    if (user) {
-        navigate('/', { replace: true });
-        return null;
+    useEffect(() => {
+        if (!loading && user) {
+            navigate('/', { replace: true });
+        }
+    }, [user, loading, navigate]);
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
     }
+
+    if (user) return null;
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gray-50">

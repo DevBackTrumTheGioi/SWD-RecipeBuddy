@@ -5,13 +5,16 @@ import { useUserActions } from '../hooks/useUserActions';
 import { LogOut, Bookmark, Settings, ChefHat, ChevronRight, ShoppingCart, Star } from 'lucide-react';
 
 const Dashboard = () => {
-    const { user, signOut } = useAuth();
+    const { user, loading: authLoading, signOut } = useAuth();
     const navigate = useNavigate();
     const { fetchBookmarkedRecipes } = useUserActions();
     const [savedRecipes, setSavedRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Wait for auth session to be restored before checking user
+        if (authLoading) return;
+
         if (!user) {
             navigate('/login', { replace: true });
             return;
@@ -23,7 +26,7 @@ const Dashboard = () => {
             setLoading(false);
         };
         loadSaved();
-    }, [user, navigate, fetchBookmarkedRecipes]);
+    }, [user, authLoading, navigate, fetchBookmarkedRecipes]);
 
     const handleSignOut = async () => {
         await signOut();
